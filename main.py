@@ -21,12 +21,9 @@ print(TOKEN)
 intents: Intents = Intents.default()
 intents.message_content = True
 client: Client = Client(intents=intents)
-
+#
 # OLD MAP STUFF
 user_scores = {}
-throwbreakstreak = {}
-throwbreakstreak['hi'] = 100
-throwbreakstreak['poopula'] = 1
 
 #NEW SQL STUFF
 conn = sqlite3.connect('gulungus_economy.db')
