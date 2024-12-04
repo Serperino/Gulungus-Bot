@@ -14,7 +14,7 @@ def get_response(user_input: str) -> str:
     elif 'roll shit' in lowered:
         return f'you rolled: {randint(1,6)}'
     elif 'mrbeast' in lowered:
-        return poopy
+        return poopy 
     elif '50/50' in lowered:
         return 'type low or mid to gamble'
         

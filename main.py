@@ -32,8 +32,9 @@ cursor = conn.cursor()
 cursor.execute('''
     CREATE TABLE IF NOT EXISTS gulungus_economy (
         user_id TEXT PRIMARY KEY,
-        balance INTEGER DEFAULT 0,
-        high_score INTEGER DEFAULT 0
+        balance INTEGER DEFAULT 50,
+        high_score INTEGER DEFAULT 0,
+        user_name TEXT 
     )
 ''')
 conn.commit()
@@ -57,12 +58,12 @@ async def handle_leaderBoard(message: Message):
 async def handle_leaderBoard_SQL(message: Message):
     def check(m):
         return m.author == message.author and m.channel == message.channel and m.content.lower() in ['leaderboard']
-    cursor.execute("SELECT user_id, high_score, balance FROM gulungus_economy ORDER BY high_score DESC LIMIT 10")
+    cursor.execute("SELECT user_name, high_score, balance FROM gulungus_economy ORDER BY high_score DESC LIMIT 10")
     leaderBoard = cursor.fetchall()
     embed = discord.Embed(title="Leaderboard", description="Here are the top users", color=0x00ff00)  # You can customize the title, description, and color
     if leaderBoard:
-        for user_id, high_score, balance in leaderBoard:
-            embed.add_field(name=user_id, value=f"Score: {high_score}", inline=False)
+        for user_name, high_score, balance in leaderBoard:
+            embed.add_field(name=user_name, value=f"Score: {high_score}", inline=False)
             # "Score: {high_score}\nBalance: ${balance}" if i want to add the balance
     else:
          embed.description = "No entires found"
@@ -72,14 +73,19 @@ async def handle_leaderBoard_SQL(message: Message):
 async def handle_balance(message: Message):
     def check(m):
         return m.author == message.author and m.channel == message.channel and m.content.lower() in ['leaderboard']
-    user_id = str(message.author.display_name)
-    cursor.execute("SELECT balance FROM gulungus_economy WHERE user_id = ?", (user_id,))
+    user_id = str(message.author.id)
+    user_name_curr = str(message.author.display_name)
+    cursor.execute("SELECT balance, user_name FROM gulungus_economy WHERE user_id = ?", (user_id,))
     result = cursor.fetchone()
     balance = result[0]
+    user_name = result[1]
+    if user_name_curr != user_name:
+        cursor.execute("UPDATE gulungus_economy SET user_name = ? WHERE user_id = ?", (user_name_curr, user_id))
+        user_name = user_name_curr
     embed = discord.Embed(title="Balance", description="", color=0x00ff00)
     if result:
         print("test")
-        embed.add_field(name=user_id, value=f"Balance: ${balance}", inline=False)
+        embed.add_field(name=user_name, value=f"Balance: ${balance}", inline=False)
     await message.channel.send(embed=embed)
     
     
@@ -131,7 +137,8 @@ async def update_balance(message: Message, user_id, sessionScore):
 async def handle_throw_test(message: Message):
     def check(m):
         return m.author == message.author and m.channel == message.channel and m.content.lower() in ['throwtest', '1', '2', '12']
-    user_id = str(message.author.display_name)
+    user_id = str(message.author.id)
+    username = str(message.author.display_name)
     
    #if user_id not in throwbreakstreak:
     #    throwbreakstreak[user_id] = 0
@@ -140,7 +147,7 @@ async def handle_throw_test(message: Message):
     
     conn = sqlite3.connect('gulungus_economy.db')
     c = conn.cursor()
-    c.execute("INSERT OR IGNORE INTO gulungus_economy (user_id, balance, high_score) VALUES (?, ?, ?)", (user_id, 0, 0))
+    c.execute("INSERT OR IGNORE INTO gulungus_economy (user_id, balance, high_score, user_name) VALUES (?, ?, ?, ?)", (user_id, 0, 0, username))
     conn.commit()
     
     
@@ -209,11 +216,25 @@ async def handle_throw_test(message: Message):
 async def handle_5050_response_tekken(message: Message, user_message: str):
     def check(m):
         return m.author == message.author and m.channel == message.channel and m.content.lower() in ['low', 'mid']
-    
-    user_id = str(message.author.display_name)
-    if user_id not in user_scores:
-        user_scores[user_id] = 0
+    user_id = str(message.author.id)
+    cursor = conn.cursor()
+    cursor.execute("SELECT balance FROM gulungus_economy WHERE user_id = ?", (user_id,))
+    result = cursor.fetchone()
+    userBalance = result[0]
     sessionScore = 0
+    message_pieces = message.content.split()
+    userWager = int(message_pieces[1])
+    user_name= str(message.author.display_name)
+    print(message_pieces[1])
+    if len(message_pieces) < 2 or not message_pieces[1].isdigit():
+        await message.channel.send("Invalid input. Use the format !50/50 <amount>")
+        return
+    
+    
+    if userBalance < int(message_pieces[1]):
+        await message.channel.send("Not enough cash stranger")
+        return
+  
     
         
         
@@ -224,18 +245,27 @@ async def handle_5050_response_tekken(message: Message, user_message: str):
             user_guess = await client.wait_for('message', check=check, timeout=30.0)  
             coin_flip = choice(['low', 'mid'])
             if user_guess.content.lower() == coin_flip:
-                sessionScore += 1
-                await message.channel.send(f'ur goated, current streak is {sessionScore}' )
+                await message.channel.send("YOU WIN")
+                cursor.execute("UPDATE gulungus_economy SET balance = ? WHERE user_id = ?", ((userBalance + userWager), user_id))
+                newBalance = userBalance + userWager
+              
             else:
-                await message.channel.send("ur trash")
-                if user_scores[user_id] < sessionScore:
-                    await message.channel.send(f'new highscore of {sessionScore}')
-                    user_scores[user_id] = sessionScore
-                await message.channel.send(user_scores[user_id])
-                break
-        except asyncio.TimeoutError:
-            await message.channel.send('You took too long')
+                await message.channel.send("YOU LOSE")
+                cursor.execute("UPDATE gulungus_economy SET balance = ? WHERE user_id = ?", ((userBalance - userWager), user_id))
+                newBalance = userBalance - userWager
+                
+                
+                                
+            embed = discord.Embed(title="New Balance", description="", color=0x00ff00)
+            embed.add_field(name=user_name, value=f"Balance: ${newBalance}", inline=False)
+            await message.channel.send(embed=embed)
+            conn.commit()
             break
+        except asyncio.TimeoutError:  
+            await message.channel.send('You took too long to respond.')
+            break  
+        
+      
 
         
 async def send_message(message: Message, user_message: str) -> None:
