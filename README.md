@@ -1,7 +1,7 @@
 # Gulungus-Bot
 Gulungus Bot is a Discord bot written in Python, centering around practicing throw-breaks for _Tekken 8_. Users are incentivized through a server-wide economy system, earning currency for successfully breaking throws.
 
-## Features (Version 0.2)
+## Features (Version 0.3)
 - **Throw Break Practice** - Users can practice throw breaks against a variety of characters (more to be added)
 - **Leaderboard** - Tracks users' scores and displays rankings
 - **SQLite integration** - Leverages SQLite to manage leaderboard, allowing for easy backup and restoration
