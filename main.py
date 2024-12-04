@@ -57,16 +57,41 @@ async def handle_leaderBoard(message: Message):
 async def handle_leaderBoard_SQL(message: Message):
     def check(m):
         return m.author == message.author and m.channel == message.channel and m.content.lower() in ['leaderboard']
-    cursor.execute("SELECT user_id, high_score FROM gulungus_economy ORDER BY high_score DESC LIMIT 10")
+    cursor.execute("SELECT user_id, high_score, balance FROM gulungus_economy ORDER BY high_score DESC LIMIT 10")
     leaderBoard = cursor.fetchall()
     embed = discord.Embed(title="Leaderboard", description="Here are the top users", color=0x00ff00)  # You can customize the title, description, and color
     if leaderBoard:
-        for user_id, high_score in leaderBoard:
-            embed.add_field(name=user_id, value = f"score: {high_score}", inline=False)
+        for user_id, high_score, balance in leaderBoard:
+            embed.add_field(name=user_id, value=f"Score: {high_score}", inline=False)
+            # "Score: {high_score}\nBalance: ${balance}" if i want to add the balance
     else:
          embed.description = "No entires found"
     embed.set_footer(text="This is the leaderboard footer")
     await message.channel.send(embed=embed)
+    
+async def handle_balance(message: Message):
+    def check(m):
+        return m.author == message.author and m.channel == message.channel and m.content.lower() in ['leaderboard']
+    user_id = str(message.author.display_name)
+    cursor.execute("SELECT balance FROM gulungus_economy WHERE user_id = ?", (user_id,))
+    result = cursor.fetchone()
+    balance = result[0]
+    embed = discord.Embed(title="Balance", description="", color=0x00ff00)
+    if result:
+        print("test")
+        embed.add_field(name=user_id, value=f"Balance: ${balance}", inline=False)
+    await message.channel.send(embed=embed)
+    
+    
+    
+    
+    
+    # if result:
+    #     for user_id, high_score, balance in result:
+    #         embed.add_field(name=user_id, value=f"Balance: {balance}", inline=False)
+    #         # "Score: {high_score}\nBalance: ${balance}" if i want to add the balance
+    # await message.channel.send(embed=embed)
+            
             
     
     
@@ -84,6 +109,19 @@ async def update_highscore(message: Message, user_id, sessionScore):
         conn.commit()  
         await message.channel.send(f'New highscore of {sessionScore}!')
     await message.channel.send(f'Score of  {sessionScore}!')
+    
+    
+async def update_balance(message: Message, user_id, sessionScore):
+    cursor = conn.cursor()
+    cursor.execute("SELECT balance FROM gulungus_economy WHERE user_id = ?", (user_id,))
+    result = cursor.fetchone()
+    if result:
+        current_balance = result[0]
+    cursor.execute("UPDATE gulungus_economy SET balance = ? WHERE user_id = ?", ((current_balance+sessionScore), user_id))
+    conn.commit()
+    await message.channel.send(f'balance of  {current_balance + sessionScore}!')
+    
+    
 
     
     
@@ -95,8 +133,8 @@ async def handle_throw_test(message: Message):
         return m.author == message.author and m.channel == message.channel and m.content.lower() in ['throwtest', '1', '2', '12']
     user_id = str(message.author.display_name)
     
-    if user_id not in throwbreakstreak:
-        throwbreakstreak[user_id] = 0
+   #if user_id not in throwbreakstreak:
+    #    throwbreakstreak[user_id] = 0
     #SQL WORK IN PROGRESS####################
     
     
@@ -149,23 +187,26 @@ async def handle_throw_test(message: Message):
             if user_guess.content.lower() != coin_flip:
                 await message.channel.send(f'That was a {coin_flip} break')
                 await update_highscore(message, user_id, sessionScore)
-                if throwbreakstreak[user_id] < sessionScore:
+                await update_balance(message, user_id, sessionScore)
+              #  if throwbreakstreak[user_id] < sessionScore:
                      #   await message.channel.send(f'new highscore of {sessionScore}')
-                        throwbreakstreak[user_id] = sessionScore
+               #         throwbreakstreak[user_id] = sessionScore
                       
                       #  await message.channel.send(throwbreakstreak[user_id])
                 break
         except asyncio.TimeoutError:
             await message.channel.send('You took too long')
             await update_highscore(message, user_id, sessionScore)
-            if throwbreakstreak[user_id] < sessionScore:
+            await update_balance(message, user_id, sessionScore)
+            #if throwbreakstreak[user_id] < sessionScore:
                  #   await message.channel.send(f'new highscore of {sessionScore}')
-                    throwbreakstreak[user_id] = sessionScore
+             #       throwbreakstreak[user_id] = sessionScore
                  #   await message.channel.send(throwbreakstreak[user_id])
+                 
                 
             break       
     
-async def handle_5050_response_tekken(message: Message):
+async def handle_5050_response_tekken(message: Message, user_message: str):
     def check(m):
         return m.author == message.author and m.channel == message.channel and m.content.lower() in ['low', 'mid']
     
@@ -175,8 +216,7 @@ async def handle_5050_response_tekken(message: Message):
     sessionScore = 0
     
         
-            
-
+        
     while True:
         await message.channel.send('Choose low or mid (or type "exit" to quit):')
         try:
@@ -216,11 +256,13 @@ async def send_message(message: Message, user_message: str) -> None:
         elif is_public:
             await message.channel.send(response)
             if '50/50' in user_message:
-                await handle_5050_response_tekken(message)
+                await handle_5050_response_tekken(message, user_message)
             if 'throwtest' in user_message:
                 await handle_throw_test(message)
             if 'leaderboard' in user_message:
                 await handle_leaderBoard_SQL(message)
+            if 'balance' in user_message:
+                await handle_balance(message)
             
             
     except Exception as e:
