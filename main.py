@@ -1,5 +1,5 @@
 import asyncio
-from random import choice
+from random import choice, random, shuffle
 from typing import Final
 import os 
 import sqlite3
@@ -267,7 +267,162 @@ async def handle_5050_response_tekken(message: Message, user_message: str):
         
       
 
-        
+async def handle_blackjack(client, message: Message, user_message: str):
+    def check(m):
+        return m.author == message.author and m.channel == message.channel and m.content.lower() in ['low', 'mid']
+  
+    user_id = str(message.author.id)
+    cursor = conn.cursor()
+    cursor.execute("SELECT balance FROM gulungus_economy WHERE user_id = ?", (user_id,))
+    result = cursor.fetchone()
+    userBalance = result[0]
+    sessionScore = 0
+    messagePieces = message.content.split()
+    userWager = int(messagePieces[1])
+    userName= str(message.author.display_name)
+    print(messagePieces[1])
+    if len(messagePieces) < 2 or not messagePieces[1].isdigit():
+        await message.channel.send("Invalid input. Use the format !50/50 <amount>")
+        return
+    if userBalance < int(messagePieces[1]):
+        await message.channel.send("Not enough cash stranger")
+        return
+    suits = ["Spades", "Hearts", "Diamonds", "Clubs"]
+    ranks = [
+    {"rank": "Ace", "value": 11, "emoji": "🂡"},  
+    {"rank": "2", "value": 2, "emoji": "🂢"},
+    {"rank": "3", "value": 3, "emoji": "🂣"},
+    {"rank": "4", "value": 4, "emoji": "🂤"},
+    {"rank": "5", "value": 5, "emoji": "🂥"},
+    {"rank": "6", "value": 6, "emoji": "🂦"},
+    {"rank": "7", "value": 7, "emoji": "🂧"},
+    {"rank": "8", "value": 8, "emoji": "🂨"},
+    {"rank": "9", "value": 9, "emoji": "🂩"},
+    {"rank": "10", "value": 10, "emoji": "🂪"},
+    {"rank": "Jack", "value": 10, "emoji": "🂫"},
+    {"rank": "Queen", "value": 10, "emoji": "🂭"},
+    {"rank": "King", "value": 10, "emoji": "🂮"},
+    ]
+    deck = []
+    for suit in suits:
+        for rank in ranks:
+            deck.append({
+            "suit": suit,
+            "rank": rank["rank"],
+            "value": rank["value"],
+            "emoji": rank["emoji"]
+        })
+    for card in deck:
+        print(f"{card['emoji']} {card['rank']} of {card['suit']} (Value: {card['value']})")
+    shuffle(deck)
+    drawnCard = deck.pop()
+    print(drawnCard)
+    drawnCard2 = deck.pop()
+    print(drawnCard2)
+    playerHand = [deck.pop(), deck.pop()]
+    dealerHand = [deck.pop(), deck.pop()]
+    playerTotal = sum(card["value"] for card in playerHand)
+    dealerTotal = sum(card["value"] for card in dealerHand)
+    
+    gameMessage = await blackjackEmbed(message, playerHand, playerTotal, dealerHand, dealerTotal, outcome=None, gameMessage =None)
+    while True:
+        if playerTotal == 21:
+            gameMessage = await blackjackEmbed(message, playerHand, playerTotal, dealerHand, dealerTotal, "win", gameMessage)
+            break
+        if playerTotal > 21:
+            gameMessage = await blackjackEmbed(message, playerHand, playerTotal, dealerHand, dealerTotal, "lose", gameMessage)
+            break    
+        await message.channel.send("React with 🆙 to Hit or 🛑 to Stand.")
+        await gameMessage.add_reaction("🆙")
+        await gameMessage.add_reaction("🛑")
+        def check(reaction, user):
+            return user == message.author and str(reaction.emoji) in ["🆙", "🛑"]
+
+        reaction, user = await client.wait_for("reaction_add", check=check)
+        if playerTotal > 21:
+            await message.channel.send("you bussssted")
+              
+            break
+        elif str(reaction.emoji) == "🛑":
+            while dealerTotal < 17:
+                dealerHand.append(deck.pop())
+                dealerTotal = sum(card["value"] for card in dealerHand)
+               # await blackjackEmbed(message, playerHand, playerTotal, dealerTotal) # might not need thisx
+            if dealerTotal > 21:
+                await gameMessage.edit(content="DEALER BUSTED!")
+                outcome = "win"
+            elif dealerTotal > playerTotal:
+                await gameMessage.edit(content="Dealer wins.")
+                outcome = "lose"
+            elif dealerTotal == playerTotal:
+                await gameMessage.edit(content="Tie, nobody wins.")
+                outcome = "tie"
+            elif playerTotal > dealerTotal:
+                await gameMessage.edit(content="You win!")
+                outcome = "win"
+            gameMessage = await blackjackEmbed(message, playerHand, playerTotal, dealerHand, dealerTotal, outcome, gameMessage)
+            print("the last shit probably")
+            break
+            
+        elif str(reaction.emoji) == "🆙":
+            playerHand.append(deck.pop())
+            playerTotal = sum(card["value"] for card in playerHand)
+            if playerTotal > 21:
+                gameMessage = await blackjackEmbed(message, playerHand, playerTotal, dealerHand, dealerTotal, "lose", gameMessage)
+                break
+            else:
+                await gameMessage.clear_reactions()
+                await gameMessage.add_reaction("🆙")  
+                await gameMessage.add_reaction("🛑")  
+                gameMessage = await blackjackEmbed(message, playerHand, playerTotal, dealerHand, dealerTotal, None, gameMessage)
+                
+                
+            
+
+            
+    
+
+    print(f"Drawn Card: {drawnCard['emoji']} {drawnCard['rank']} of {drawnCard['suit']}")
+    print(f"Remaining Cards: {len(deck)}")  
+
+    
+   
+    
+    
+async def blackjackEmbed(message, playerHand, playerTotal, dealerHand, dealerTotal, outcome=None, gameMessage=None):
+    player_hand_display = " ".join([card["emoji"] for card in playerHand])
+    if outcome:
+        dealer_hand_display = " ".join([card["emoji"] for card in dealerHand])  # Reveal full dealer hand
+    else:
+        dealer_hand_display = " ".join([card["emoji"] for card in dealerHand[:-1]]) + " ❓"  # Hide second card
+    print("do i get here")
+    print(outcome)
+    embed = discord.Embed(
+        title="Blackjack Game",
+        description=f"**Your Hand:** {player_hand_display}\n**Dealer's Hand:** {dealer_hand_display}",
+        color=discord.Color.blue()
+    )
+    if outcome:
+        if outcome == "win":
+            embed.color = discord.Color.green()  
+            embed.description += "\n**You win!**"
+        elif outcome == "lose":
+            embed.color = discord.Color.red()  
+            embed.description += "\n**Dealer wins.**"
+        elif outcome == "tie":
+            embed.color = discord.Color.gold()  
+            embed.description += "\n**It's a tie!**"
+    
+    
+    embed.add_field(name="Your Total", value=str(playerTotal), inline=False)
+    embed.add_field(name="Dealer's Total", value=f"{dealerTotal} (hidden)", inline=False)
+    if gameMessage:
+        await gameMessage.edit(embed=embed)
+        print("do i get here POOPY")
+    else:  
+        gameMessage = await message.channel.send(embed=embed)
+    return gameMessage
+    
 async def send_message(message: Message, user_message: str) -> None:
     if not user_message:
         print("Message was empty because intents were not enabled")
@@ -293,6 +448,8 @@ async def send_message(message: Message, user_message: str) -> None:
                 await handle_leaderBoard_SQL(message)
             if 'balance' in user_message:
                 await handle_balance(message)
+            if 'bj' in user_message:
+                await handle_blackjack(client, message, user_message)
             
             
     except Exception as e:
