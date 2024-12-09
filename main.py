@@ -58,12 +58,12 @@ conn.commit()
 async def handle_leaderBoard_SQL(message: Message):
     def check(m):
         return m.author == message.author and m.channel == message.channel and m.content.lower() in ['leaderboard']
-    cursor.execute("SELECT user_name, high_score, balance FROM gulungus_economy ORDER BY high_score DESC LIMIT 10")
+    cursor.execute("SELECT user_name, high_score, balance FROM gulungus_economy ORDER BY balance DESC LIMIT 10")
     leaderBoard = cursor.fetchall()
     embed = discord.Embed(title="Leaderboard", description="Here are the top users", color=0x00ff00)  # You can customize the title, description, and color
     if leaderBoard:
         for user_name, high_score, balance in leaderBoard:
-            embed.add_field(name=user_name, value=f"Score: {high_score}", inline=False)
+            embed.add_field(name=user_name, value=f"Gulungus Bucks: {balance}", inline=False)
             # "Score: {high_score}\nBalance: ${balance}" if i want to add the balance
     else:
          embed.description = "No entires found"
@@ -75,6 +75,7 @@ async def handle_balance(message: Message):
         return m.author == message.author and m.channel == message.channel and m.content.lower() in ['leaderboard']
     user_id = str(message.author.id)
     user_name_curr = str(message.author.display_name)
+    await addUser(user_id, user_name_curr)
     cursor.execute("SELECT balance, user_name FROM gulungus_economy WHERE user_id = ?", (user_id,))
     result = cursor.fetchone()
     balance = result[0]
@@ -82,6 +83,7 @@ async def handle_balance(message: Message):
     if user_name_curr != user_name:
         cursor.execute("UPDATE gulungus_economy SET user_name = ? WHERE user_id = ?", (user_name_curr, user_id))
         user_name = user_name_curr
+        conn.commit()
     embed = discord.Embed(title="Balance", description="", color=0x00ff00)
     if result:
         print("test")
@@ -127,7 +129,23 @@ async def update_balance(message: Message, user_id, sessionScore):
         current_balance = result[0]
     cursor.execute("UPDATE gulungus_economy SET balance = ? WHERE user_id = ?", ((current_balance+sessionScore), user_id))
     conn.commit()
-    await message.channel.send(f'balance of  {current_balance + sessionScore}!')
+    await message.channel.send(f'balance of {current_balance + sessionScore}!')
+    
+    
+async def update_balance_blackjack(message: Message, user_id, newBalance):
+    print("do i even get here")
+    userName= str(message.author.display_name)
+    await addUser(user_id, userName)
+    cursor = conn.cursor()
+    cursor.execute("SELECT balance FROM gulungus_economy WHERE user_id = ?", (user_id,))
+    result = cursor.fetchone()
+    if result:
+        current_balance = result[0]
+    cursor.execute("UPDATE gulungus_economy SET balance = ? WHERE user_id = ?", ((newBalance), user_id))
+    conn.commit()
+    await message.channel.send(f'balance of {newBalance}!')
+    
+    
     
 async def addUser(user_id, userName):
     conn = sqlite3.connect('gulungus_economy.db')
@@ -144,10 +162,22 @@ async def addUser(user_id, userName):
     
     
 async def handle_throw_test(message: Message):
+    # def check(m):
+    #     return m.author == message.author and m.channel == message.channel and m.content.lower() in ['throwtest', '1', '2', '12']
     def check(m):
-        return m.author == message.author and m.channel == message.channel and m.content.lower() in ['throwtest', '1', '2', '12']
+        valid_inputs = ['1', '2', '12']
+        if m.author == message.author and m.channel == message.channel:
+            if m.content.strip() in valid_inputs:
+                return True
+            else:
+                asyncio.create_task(m.channel.send("Invalid input! Please type '1', '2', or '12'."))
+                return False
+        return False
     user_id = str(message.author.id)
     username = str(message.author.display_name)
+    interval = 3.0
+    if username == "Nitrox":
+        interval = 1.0
     
    #if user_id not in throwbreakstreak:
     #    throwbreakstreak[user_id] = 0
@@ -160,7 +190,7 @@ async def handle_throw_test(message: Message):
     conn.commit()
     
     
-
+    validInputs = ['1', '2', '12']
         
         
         
@@ -169,6 +199,7 @@ async def handle_throw_test(message: Message):
     while True:
         try:
             coin_flip = choice(['1', '2', '12'])
+            
             coin_flip_character = choice([1, 2 , 3])
             #Chara 1 = paul, chara 2 = drag chara 3 = king
             print(coin_flip)
@@ -194,24 +225,24 @@ async def handle_throw_test(message: Message):
                 if coin_flip_character == 3:
                     throwtoBreak = 'https://cdn.discordapp.com/attachments/755870190411055249/1298187172817403956/king2break.gif?ex=6718a685&is=67175505&hm=d9e39936ccaa88a4d5cc81bcda7b7dc470210ca77a46bf615c7121724c87f50c&'
             await message.channel.send(throwtoBreak)
-            user_guess = await client.wait_for('message', check=check, timeout=3.0) 
+            await asyncio.sleep(0.2)
+            user_guess = await client.wait_for('message', check=check, timeout=interval) 
+            # make the timeout 1.0 when nitrox is playing
+          #  if user_guess != 1 or user_gues
             print(user_guess)
             print(f"User guessed: {user_guess.content}, Expected: {coin_flip}")
             if user_guess.content.lower() == coin_flip:
                 sessionScore += 1
                 await message.channel.send(f'Current streak is {sessionScore}')
+                await asyncio.sleep(0.8)
             if user_guess.content.lower() != coin_flip:
                 await message.channel.send(f'That was a {coin_flip} break')
                 await update_highscore(message, user_id, sessionScore)
                 await update_balance(message, user_id, sessionScore)
-              #  if throwbreakstreak[user_id] < sessionScore:
-                     #   await message.channel.send(f'new highscore of {sessionScore}')
-               #         throwbreakstreak[user_id] = sessionScore
-                      
-                      #  await message.channel.send(throwbreakstreak[user_id])
                 break
         except asyncio.TimeoutError:
             await message.channel.send('You took too long')
+            await message.channel.send(f'That was a {coin_flip} break')
             await update_highscore(message, user_id, sessionScore)
             await update_balance(message, user_id, sessionScore)
             #if throwbreakstreak[user_id] < sessionScore:
@@ -275,6 +306,16 @@ async def handle_5050_response_tekken(message: Message, user_message: str):
             break  
         
       
+def calculate_hand_total(hand):
+    total = sum(card["value"] for card in hand)
+    aces = sum(1 for card in hand if card["rank"] == "Ace")
+    while total > 21 and aces:
+        total -= 10  
+        aces -= 1
+    
+    return total
+
+
 
 async def handle_blackjack(client, message: Message, user_message: str):
     def check(m):
@@ -290,6 +331,7 @@ async def handle_blackjack(client, message: Message, user_message: str):
     sessionScore = 0
     messagePieces = message.content.split()
     userWager = int(messagePieces[1])
+    print(userWager)
     userName= str(message.author.display_name)
     print("testeroni before")
 
@@ -337,17 +379,25 @@ async def handle_blackjack(client, message: Message, user_message: str):
     print(drawnCard2)
     playerHand = [deck.pop(), deck.pop()]
     dealerHand = [deck.pop(), deck.pop()]
-    playerTotal = sum(card["value"] for card in playerHand)
-    dealerTotal = sum(card["value"] for card in dealerHand)
+    #playerTotal = sum(card["value"] for card in playerHand)
+    #dealerTotal = sum(card["value"] for card in dealerHand)
+    playerTotal = calculate_hand_total(playerHand)
+    dealerTotal = calculate_hand_total(dealerHand)
     messageSent = False
     
     gameMessage = await blackjackEmbed(message, playerHand, playerTotal, dealerHand, dealerTotal, outcome=None, gameMessage =None)
     while True:
-        if playerTotal == 21:
+        if dealerTotal == 21 and playerTotal == 21:
+            gameMessage = await blackjackEmbed(message, playerHand, playerTotal, dealerHand, dealerTotal, "tie", gameMessage)
+            break
+        elif playerTotal == 21:
             gameMessage = await blackjackEmbed(message, playerHand, playerTotal, dealerHand, dealerTotal, "win", gameMessage)
+            await update_balance_blackjack(message, user_id, (userBalance + userWager))
             break
         if playerTotal > 21:
             gameMessage = await blackjackEmbed(message, playerHand, playerTotal, dealerHand, dealerTotal, "lose", gameMessage)
+            print("i should be losing money here")
+            await update_balance_blackjack(message, user_id, (userBalance - userWager))
             break
         if messageSent == False:
             await message.channel.send("React with 🆙 to Hit or 🛑 to Stand.")
@@ -365,19 +415,25 @@ async def handle_blackjack(client, message: Message, user_message: str):
         elif str(reaction.emoji) == "🛑":
             while dealerTotal < 17:
                 dealerHand.append(deck.pop())
-                dealerTotal = sum(card["value"] for card in dealerHand)
+               # dealerTotal = sum(card["value"] for card in dealerHand)
+                dealerTotal = calculate_hand_total(dealerHand)
                # await blackjackEmbed(message, playerHand, playerTotal, dealerTotal) # might not need thisx
             if dealerTotal > 21:
+                print(userBalance + userWager)
+                await update_balance_blackjack(message, user_id, (userBalance+userWager))
                 await gameMessage.edit(content="DEALER BUSTED!")
                 outcome = "win"
             elif dealerTotal > playerTotal:
                 await gameMessage.edit(content="Dealer wins.")
+                await update_balance_blackjack(message, user_id, (userBalance-userWager))
                 outcome = "lose"
             elif dealerTotal == playerTotal:
                 await gameMessage.edit(content="Tie, nobody wins.")
                 outcome = "tie"
             elif playerTotal > dealerTotal:
+                print(userBalance + userWager)
                 await gameMessage.edit(content="You win!")
+                await update_balance_blackjack(message, user_id, (userBalance+userWager))
                 outcome = "win"
             gameMessage = await blackjackEmbed(message, playerHand, playerTotal, dealerHand, dealerTotal, outcome, gameMessage)
             print("the last shit probably")
@@ -385,8 +441,9 @@ async def handle_blackjack(client, message: Message, user_message: str):
             
         elif str(reaction.emoji) == "🆙":
             playerHand.append(deck.pop())
-            playerTotal = sum(card["value"] for card in playerHand)
+            playerTotal = calculate_hand_total(playerHand)
             if playerTotal > 21:
+                await update_balance_blackjack(message, user_id, (userBalance - userWager))
                 gameMessage = await blackjackEmbed(message, playerHand, playerTotal, dealerHand, dealerTotal, "lose", gameMessage)
                 break
             else:
@@ -414,12 +471,14 @@ async def blackjackEmbed(message, playerHand, playerTotal, dealerHand, dealerTot
         dealer_hand_display = " ".join([card["emoji"] for card in dealerHand])  # Reveal full dealer hand
     else:
         dealer_hand_display = " ".join([card["emoji"] for card in dealerHand[:-1]]) + " ❓"  # Hide second card
+        dealerTotal = sum(card["value"] for card in dealerHand[:-1]) 
     print("do i get here")
     print(outcome)
     embed = discord.Embed(
         title="Blackjack Game",
         description=f"**Your Hand:** {player_hand_display}\n**Dealer's Hand:** {dealer_hand_display}",
         color=discord.Color.blue()
+         
     )
     if outcome:
         if outcome == "win":
@@ -490,7 +549,7 @@ async def on_message(message: Message) -> None:
     user_message: str = message.content
     channel: str = str(message.channel)
     
-    print(f'[{channel}] {username} "{user_message}"')
+   # print(f'[{channel}] {username} "{user_message}"')
     await send_message (message, user_message)
     
 #ENTRY POINT
