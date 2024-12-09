@@ -42,18 +42,18 @@ conn.commit()
 
 #MESSAGE
 
-async def handle_leaderBoard(message: Message):
-    def check(m):
-        return m.author == message.author and m.channel == message.channel and m.content.lower() in ['leaderboard']
-    sorted_throwbreakstreak = dict(sorted(throwbreakstreak.items(), key=lambda item: item[1], reverse=True))
-    print(sorted_throwbreakstreak)
-    embed = discord.Embed(title="Leaderboard", description="Here are the top users", color=0x00ff00)  # You can customize the title, description, and color
-    for name, score in sorted_throwbreakstreak.items():
-        embed.add_field(name=name, value=f"Score: {score}", inline=False)
-    else:
-        embed.set_footer(text="This is the leaderboard footer")
+# async def handle_leaderBoard(message: Message):
+#     def check(m):
+#         return m.author == message.author and m.channel == message.channel and m.content.lower() in ['leaderboard']
+#     sorted_throwbreakstreak = dict(sorted(throwbreakstreak.items(), key=lambda item: item[1], reverse=True))
+#     print(sorted_throwbreakstreak)
+#     embed = discord.Embed(title="Leaderboard", description="Here are the top users", color=0x00ff00)  # You can customize the title, description, and color
+#     for name, score in sorted_throwbreakstreak.items():
+#         embed.add_field(name=name, value=f"Score: {score}", inline=False)
+#     else:
+#         embed.set_footer(text="This is the leaderboard footer")
 
-    await message.channel.send(embed=embed)
+#     await message.channel.send(embed=embed)
     
 async def handle_leaderBoard_SQL(message: Message):
     def check(m):
@@ -118,6 +118,8 @@ async def update_highscore(message: Message, user_id, sessionScore):
     
     
 async def update_balance(message: Message, user_id, sessionScore):
+    userName= str(message.author.display_name)
+    await addUser(user_id, userName)
     cursor = conn.cursor()
     cursor.execute("SELECT balance FROM gulungus_economy WHERE user_id = ?", (user_id,))
     result = cursor.fetchone()
@@ -126,6 +128,13 @@ async def update_balance(message: Message, user_id, sessionScore):
     cursor.execute("UPDATE gulungus_economy SET balance = ? WHERE user_id = ?", ((current_balance+sessionScore), user_id))
     conn.commit()
     await message.channel.send(f'balance of  {current_balance + sessionScore}!')
+    
+async def addUser(user_id, userName):
+    conn = sqlite3.connect('gulungus_economy.db')
+    c = conn.cursor()
+    c.execute("INSERT OR IGNORE INTO gulungus_economy (user_id, balance, high_score, user_name) VALUES (?, ?, ?, ?)", (user_id, 50, 0, userName))
+    conn.commit()
+    return
     
     
 
@@ -270,16 +279,23 @@ async def handle_5050_response_tekken(message: Message, user_message: str):
 async def handle_blackjack(client, message: Message, user_message: str):
     def check(m):
         return m.author == message.author and m.channel == message.channel and m.content.lower() in ['low', 'mid']
-  
+    userName= str(message.author.display_name)
     user_id = str(message.author.id)
+    await addUser(user_id, userName)
     cursor = conn.cursor()
     cursor.execute("SELECT balance FROM gulungus_economy WHERE user_id = ?", (user_id,))
     result = cursor.fetchone()
+    
     userBalance = result[0]
     sessionScore = 0
     messagePieces = message.content.split()
     userWager = int(messagePieces[1])
     userName= str(message.author.display_name)
+    print("testeroni before")
+
+   
+    
+    print("testeroni after")
     print(messagePieces[1])
     if len(messagePieces) < 2 or not messagePieces[1].isdigit():
         await message.channel.send("Invalid input. Use the format !50/50 <amount>")
@@ -323,6 +339,7 @@ async def handle_blackjack(client, message: Message, user_message: str):
     dealerHand = [deck.pop(), deck.pop()]
     playerTotal = sum(card["value"] for card in playerHand)
     dealerTotal = sum(card["value"] for card in dealerHand)
+    messageSent = False
     
     gameMessage = await blackjackEmbed(message, playerHand, playerTotal, dealerHand, dealerTotal, outcome=None, gameMessage =None)
     while True:
@@ -331,8 +348,10 @@ async def handle_blackjack(client, message: Message, user_message: str):
             break
         if playerTotal > 21:
             gameMessage = await blackjackEmbed(message, playerHand, playerTotal, dealerHand, dealerTotal, "lose", gameMessage)
-            break    
-        await message.channel.send("React with 🆙 to Hit or 🛑 to Stand.")
+            break
+        if messageSent == False:
+            await message.channel.send("React with 🆙 to Hit or 🛑 to Stand.")
+            messageSent = True
         await gameMessage.add_reaction("🆙")
         await gameMessage.add_reaction("🛑")
         def check(reaction, user):
@@ -415,10 +434,12 @@ async def blackjackEmbed(message, playerHand, playerTotal, dealerHand, dealerTot
     
     
     embed.add_field(name="Your Total", value=str(playerTotal), inline=False)
-    embed.add_field(name="Dealer's Total", value=f"{dealerTotal} (hidden)", inline=False)
+    if outcome:
+        embed.add_field(name="Dealer's Total", value=f"{dealerTotal}", inline=False)
+    else:
+        embed.add_field(name="Dealer's Total", value=f"{dealerTotal} (hidden)", inline=False)
     if gameMessage:
         await gameMessage.edit(embed=embed)
-        print("do i get here POOPY")
     else:  
         gameMessage = await message.channel.send(embed=embed)
     return gameMessage
