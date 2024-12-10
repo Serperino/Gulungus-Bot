@@ -13,9 +13,7 @@ import discord
 
 #LOAD TOKEN
 load_dotenv()
-print("hi")
 TOKEN: Final[str] = os.getenv('DISCORD_TOKEN')
-print(TOKEN)
 
 #BOT SETUP
 intents: Intents = Intents.default()
@@ -40,20 +38,8 @@ cursor.execute('''
 conn.commit()
 
 
-#MESSAGE
 
-# async def handle_leaderBoard(message: Message):
-#     def check(m):
-#         return m.author == message.author and m.channel == message.channel and m.content.lower() in ['leaderboard']
-#     sorted_throwbreakstreak = dict(sorted(throwbreakstreak.items(), key=lambda item: item[1], reverse=True))
-#     print(sorted_throwbreakstreak)
-#     embed = discord.Embed(title="Leaderboard", description="Here are the top users", color=0x00ff00)  # You can customize the title, description, and color
-#     for name, score in sorted_throwbreakstreak.items():
-#         embed.add_field(name=name, value=f"Score: {score}", inline=False)
-#     else:
-#         embed.set_footer(text="This is the leaderboard footer")
 
-#     await message.channel.send(embed=embed)
     
 async def handle_leaderBoard_SQL(message: Message):
     def check(m):
@@ -86,7 +72,6 @@ async def handle_balance(message: Message):
         conn.commit()
     embed = discord.Embed(title="Balance", description="", color=0x00ff00)
     if result:
-        print("test")
         embed.add_field(name=user_name, value=f"Balance: ${balance}", inline=False)
     await message.channel.send(embed=embed)
     
@@ -94,16 +79,8 @@ async def handle_balance(message: Message):
     
     
     
-    # if result:
-    #     for user_id, high_score, balance in result:
-    #         embed.add_field(name=user_id, value=f"Balance: {balance}", inline=False)
-    #         # "Score: {high_score}\nBalance: ${balance}" if i want to add the balance
-    # await message.channel.send(embed=embed)
-            
-            
-    
-    
-    
+
+
 
         
 async def update_highscore(message: Message, user_id, sessionScore):
@@ -123,17 +100,17 @@ async def update_balance(message: Message, user_id, sessionScore):
     userName= str(message.author.display_name)
     await addUser(user_id, userName)
     cursor = conn.cursor()
+    doubleSession = sessionScore * 2
     cursor.execute("SELECT balance FROM gulungus_economy WHERE user_id = ?", (user_id,))
     result = cursor.fetchone()
     if result:
         current_balance = result[0]
-    cursor.execute("UPDATE gulungus_economy SET balance = ? WHERE user_id = ?", ((current_balance+sessionScore), user_id))
+    cursor.execute("UPDATE gulungus_economy SET balance = ? WHERE user_id = ?", ((current_balance+doubleSession), user_id))
     conn.commit()
     await message.channel.send(f'balance of {current_balance + sessionScore}!')
     
     
 async def update_balance_blackjack(message: Message, user_id, newBalance):
-    print("do i even get here")
     userName= str(message.author.display_name)
     await addUser(user_id, userName)
     cursor = conn.cursor()
@@ -162,8 +139,6 @@ async def addUser(user_id, userName):
     
     
 async def handle_throw_test(message: Message):
-    # def check(m):
-    #     return m.author == message.author and m.channel == message.channel and m.content.lower() in ['throwtest', '1', '2', '12']
     def check(m):
         valid_inputs = ['1', '2', '12']
         if m.author == message.author and m.channel == message.channel:
@@ -176,12 +151,10 @@ async def handle_throw_test(message: Message):
     user_id = str(message.author.id)
     username = str(message.author.display_name)
     interval = 3.0
-    if username == "Nitrox":
+    if username == "Nitrox": #shoutouts goatytrox
         interval = 1.0
     
-   #if user_id not in throwbreakstreak:
-    #    throwbreakstreak[user_id] = 0
-    #SQL WORK IN PROGRESS####################
+ 
     
     
     conn = sqlite3.connect('gulungus_economy.db')
@@ -202,7 +175,6 @@ async def handle_throw_test(message: Message):
             
             coin_flip_character = choice([1, 2 , 3])
             #Chara 1 = paul, chara 2 = drag chara 3 = king
-            print(coin_flip)
             if coin_flip == '12':
                 if coin_flip_character == 1:
                     throwtoBreak = 'https://cdn.discordapp.com/attachments/732775000372805634/1286981380277800992/gromp.gif?ex=66efe250&is=66ee90d0&hm=dbff5181a9c43f9362b228d60aff8440ce457803d1716fe6e649b86c43df690b&'
@@ -227,10 +199,8 @@ async def handle_throw_test(message: Message):
             await message.channel.send(throwtoBreak)
             await asyncio.sleep(0.2)
             user_guess = await client.wait_for('message', check=check, timeout=interval) 
-            # make the timeout 1.0 when nitrox is playing
-          #  if user_guess != 1 or user_gues
-            print(user_guess)
-            print(f"User guessed: {user_guess.content}, Expected: {coin_flip}")
+       
+    
             if user_guess.content.lower() == coin_flip:
                 sessionScore += 1
                 await message.channel.send(f'Current streak is {sessionScore}')
@@ -245,10 +215,7 @@ async def handle_throw_test(message: Message):
             await message.channel.send(f'That was a {coin_flip} break')
             await update_highscore(message, user_id, sessionScore)
             await update_balance(message, user_id, sessionScore)
-            #if throwbreakstreak[user_id] < sessionScore:
-                 #   await message.channel.send(f'new highscore of {sessionScore}')
-             #       throwbreakstreak[user_id] = sessionScore
-                 #   await message.channel.send(throwbreakstreak[user_id])
+           
                  
                 
             break       
@@ -265,7 +232,6 @@ async def handle_5050_response_tekken(message: Message, user_message: str):
     message_pieces = message.content.split()
     userWager = int(message_pieces[1])
     user_name= str(message.author.display_name)
-    print(message_pieces[1])
     if len(message_pieces) < 2 or not message_pieces[1].isdigit():
         await message.channel.send("Invalid input. Use the format !50/50 <amount>")
         return
@@ -331,14 +297,10 @@ async def handle_blackjack(client, message: Message, user_message: str):
     sessionScore = 0
     messagePieces = message.content.split()
     userWager = int(messagePieces[1])
-    print(userWager)
     userName= str(message.author.display_name)
-    print("testeroni before")
 
    
     
-    print("testeroni after")
-    print(messagePieces[1])
     if len(messagePieces) < 2 or not messagePieces[1].isdigit():
         await message.channel.send("Invalid input. Use the format !50/50 <amount>")
         return
@@ -370,17 +332,10 @@ async def handle_blackjack(client, message: Message, user_message: str):
             "value": rank["value"],
             "emoji": rank["emoji"]
         })
-    for card in deck:
-        print(f"{card['emoji']} {card['rank']} of {card['suit']} (Value: {card['value']})")
+   
     shuffle(deck)
-    drawnCard = deck.pop()
-    print(drawnCard)
-    drawnCard2 = deck.pop()
-    print(drawnCard2)
     playerHand = [deck.pop(), deck.pop()]
     dealerHand = [deck.pop(), deck.pop()]
-    #playerTotal = sum(card["value"] for card in playerHand)
-    #dealerTotal = sum(card["value"] for card in dealerHand)
     playerTotal = calculate_hand_total(playerHand)
     dealerTotal = calculate_hand_total(dealerHand)
     messageSent = False
@@ -396,7 +351,6 @@ async def handle_blackjack(client, message: Message, user_message: str):
             break
         if playerTotal > 21:
             gameMessage = await blackjackEmbed(message, playerHand, playerTotal, dealerHand, dealerTotal, "lose", gameMessage)
-            print("i should be losing money here")
             await update_balance_blackjack(message, user_id, (userBalance - userWager))
             break
         if messageSent == False:
@@ -415,11 +369,8 @@ async def handle_blackjack(client, message: Message, user_message: str):
         elif str(reaction.emoji) == "🛑":
             while dealerTotal < 17:
                 dealerHand.append(deck.pop())
-               # dealerTotal = sum(card["value"] for card in dealerHand)
                 dealerTotal = calculate_hand_total(dealerHand)
-               # await blackjackEmbed(message, playerHand, playerTotal, dealerTotal) # might not need thisx
             if dealerTotal > 21:
-                print(userBalance + userWager)
                 await update_balance_blackjack(message, user_id, (userBalance+userWager))
                 await gameMessage.edit(content="DEALER BUSTED!")
                 outcome = "win"
@@ -431,12 +382,10 @@ async def handle_blackjack(client, message: Message, user_message: str):
                 await gameMessage.edit(content="Tie, nobody wins.")
                 outcome = "tie"
             elif playerTotal > dealerTotal:
-                print(userBalance + userWager)
                 await gameMessage.edit(content="You win!")
                 await update_balance_blackjack(message, user_id, (userBalance+userWager))
                 outcome = "win"
             gameMessage = await blackjackEmbed(message, playerHand, playerTotal, dealerHand, dealerTotal, outcome, gameMessage)
-            print("the last shit probably")
             break
             
         elif str(reaction.emoji) == "🆙":
@@ -458,8 +407,7 @@ async def handle_blackjack(client, message: Message, user_message: str):
             
     
 
-    print(f"Drawn Card: {drawnCard['emoji']} {drawnCard['rank']} of {drawnCard['suit']}")
-    print(f"Remaining Cards: {len(deck)}")  
+   
 
     
    
@@ -468,12 +416,10 @@ async def handle_blackjack(client, message: Message, user_message: str):
 async def blackjackEmbed(message, playerHand, playerTotal, dealerHand, dealerTotal, outcome=None, gameMessage=None):
     player_hand_display = " ".join([card["emoji"] for card in playerHand])
     if outcome:
-        dealer_hand_display = " ".join([card["emoji"] for card in dealerHand])  # Reveal full dealer hand
+        dealer_hand_display = " ".join([card["emoji"] for card in dealerHand])  # reveal full dealer hand
     else:
-        dealer_hand_display = " ".join([card["emoji"] for card in dealerHand[:-1]]) + " ❓"  # Hide second card
+        dealer_hand_display = " ".join([card["emoji"] for card in dealerHand[:-1]]) + " ❓"  # hide second card
         dealerTotal = sum(card["value"] for card in dealerHand[:-1]) 
-    print("do i get here")
-    print(outcome)
     embed = discord.Embed(
         title="Blackjack Game",
         description=f"**Your Hand:** {player_hand_display}\n**Dealer's Hand:** {dealer_hand_display}",
@@ -505,7 +451,6 @@ async def blackjackEmbed(message, playerHand, playerTotal, dealerHand, dealerTot
     
 async def send_message(message: Message, user_message: str) -> None:
     if not user_message:
-        print("Message was empty because intents were not enabled")
         return
     if is_private := user_message[0] == '?':
         user_message = user_message[1:]
@@ -549,13 +494,10 @@ async def on_message(message: Message) -> None:
     user_message: str = message.content
     channel: str = str(message.channel)
     
-   # print(f'[{channel}] {username} "{user_message}"')
     await send_message (message, user_message)
     
 #ENTRY POINT
 def main() -> None:
-    print("hi")
     client.run(token= TOKEN)
 if __name__ == '__main__':
-    print("test")
     main()
