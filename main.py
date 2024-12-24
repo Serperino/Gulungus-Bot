@@ -107,7 +107,7 @@ async def update_balance(message: Message, user_id, sessionScore):
         current_balance = result[0]
     cursor.execute("UPDATE gulungus_economy SET balance = ? WHERE user_id = ?", ((current_balance+doubleSession), user_id))
     conn.commit()
-    await message.channel.send(f'balance of {current_balance + sessionScore}!')
+    await message.channel.send(f'balance of {current_balance + doubleSession}!')
     
     
 async def update_balance_blackjack(message: Message, user_id, newBalance):
@@ -152,7 +152,7 @@ async def handle_throw_test(message: Message):
     username = str(message.author.display_name)
     interval = 3.0
     if username == "Nitrox": #shoutouts goatytrox
-        interval = 1.0
+        interval = 1.2
     
  
     
@@ -173,8 +173,8 @@ async def handle_throw_test(message: Message):
         try:
             coin_flip = choice(['1', '2', '12'])
             
-            coin_flip_character = choice([1, 2 , 3])
-            #Chara 1 = paul, chara 2 = drag chara 3 = king
+            coin_flip_character = choice([1, 2 , 3, 4, 5])
+            #Chara 1 = paul, chara 2 = drag chara 3 = king chara 4 = jin chara 5 = jack8
             if coin_flip == '12':
                 if coin_flip_character == 1:
                     throwtoBreak = 'https://cdn.discordapp.com/attachments/732775000372805634/1286981380277800992/gromp.gif?ex=66efe250&is=66ee90d0&hm=dbff5181a9c43f9362b228d60aff8440ce457803d1716fe6e649b86c43df690b&'
@@ -182,6 +182,10 @@ async def handle_throw_test(message: Message):
                     throwtoBreak = 'https://cdn.discordapp.com/attachments/1088293164957315202/1298175422013374516/grompington.gif?ex=67189b93&is=67174a13&hm=a867834dadba518f2dd59f99c41d1b442a5ee70282c9827ac569ee542e9d7bad&'   
                 if coin_flip_character == 3:
                     throwtoBreak = 'https://cdn.discordapp.com/attachments/755870190411055249/1298186638106693672/gromp1ngton.gif?ex=6718a605&is=67175485&hm=95022f12db9d9b136b37500ab77c8c09b4dcbf652a134b6261844eaadf9c7596&'
+                if coin_flip_character == 4:
+                    throwtoBreak = 'https://cdn.discordapp.com/attachments/1021301690202325052/1320949717747761172/scrodular.gif?ex=676b75ca&is=676a244a&hm=0e6d27734898f990a2ac3083276927afedf46bea386e33d3ee0cd95cca99fcca&'
+                if coin_flip_character == 5:
+                    throwtoBreak = 'https://cdn.discordapp.com/attachments/1021301690202325052/1321195568063582288/imrunningoutoffilenam_es.gif?ex=676c5ac2&is=676b0942&hm=508d62294c78384fd7d5e95783b9b52f9f40273f17439335ab08b2953e28bb3f&'
             if coin_flip == '1':
                 if coin_flip_character == 1:
                     throwtoBreak = 'https://cdn.discordapp.com/attachments/732775000372805634/1286981323579330663/paulthrow.gif?ex=66efe242&is=66ee90c2&hm=a9fe1af456219931c43ac6c3ed43f5418f8e93369f649caddc19583751a626c1&'
@@ -189,6 +193,11 @@ async def handle_throw_test(message: Message):
                     throwtoBreak = 'https://cdn.discordapp.com/attachments/1088293164957315202/1298175421631696916/grompuloid.gif?ex=67189b93&is=67174a13&hm=7d73ac9638672dd2516184561c805b21afc6bd50ca06feac85e36a12742d58cf&'
                 if coin_flip_character == 3:
                     throwtoBreak = 'https://cdn.discordapp.com/attachments/755870190411055249/1298186851747627099/gr0mpington.gif?ex=6718a638&is=671754b8&hm=2eecc3bc051eef6155243e9332685f0291296eaeafcd4fdfc2eaa93d204d35bf&'
+                if coin_flip_character == 4:
+                    throwtoBreak = 'https://cdn.discordapp.com/attachments/1021301690202325052/1320949717169078382/josephscrod.gif?ex=676b75ca&is=676a244a&hm=6e64c6d7d5485be3cf4a4474b8e737e316ee436a714751fb3e8f3383a31e5431&'
+                if coin_flip_character == 5:
+                    throwtoBreak = 'https://cdn.discordapp.com/attachments/1021301690202325052/1321195567229042688/onlyrenamedsoyoucantseetheanswer.gif?ex=676c5ac1&is=676b0941&hm=2fcda6b716aa1b2e89e2de15828c52ea8d2ac11c77ecba26b577f40e7295433a&'
+                    
             if coin_flip == '2':
                 if coin_flip_character == 1:
                     throwtoBreak = 'https://cdn.discordapp.com/attachments/732775000372805634/1286981358392184932/paulthrowington.gif?ex=66efe24a&is=66ee90ca&hm=c463ccc3deedc8dae761761d6b1af9597ab1d251d3d138bd31d47a52046f5cd8&'
@@ -196,6 +205,10 @@ async def handle_throw_test(message: Message):
                     throwtoBreak = 'https://cdn.discordapp.com/attachments/1088293164957315202/1298175422357569639/grompula.gif?ex=67189b93&is=67174a13&hm=626150c395fb4498ff51ff1e3a0ca6e5cc38cfe60b57a29e853d6fd5baf73c89&'
                 if coin_flip_character == 3:
                     throwtoBreak = 'https://cdn.discordapp.com/attachments/755870190411055249/1298187172817403956/king2break.gif?ex=6718a685&is=67175505&hm=d9e39936ccaa88a4d5cc81bcda7b7dc470210ca77a46bf615c7121724c87f50c&'
+                if coin_flip_character == 4:
+                    throwtoBreak = 'https://cdn.discordapp.com/attachments/1021301690202325052/1320949716615299207/joescrod.gif?ex=676b75ca&is=676a244a&hm=75dd5c64f064582f6d825ec3d664f749c61bf25ef5377449a47bb33fab0ee746&'
+                if coin_flip_character == 5:
+                    throwtoBreak = 'https://cdn.discordapp.com/attachments/1021301690202325052/1321195567619244143/idkbruh.gif?ex=676c5ac1&is=676b0941&hm=9c0f7e9b9dfe5ceab94be654465b5797369c64a985af956d906c844fc52a411e&'
             await message.channel.send(throwtoBreak)
             await asyncio.sleep(0.2)
             user_guess = await client.wait_for('message', check=check, timeout=interval) 
@@ -450,6 +463,7 @@ async def blackjackEmbed(message, playerHand, playerTotal, dealerHand, dealerTot
     return gameMessage
     
 async def send_message(message: Message, user_message: str) -> None:
+    user_name_curr = str(message.author.display_name) #strictly for funnies
     if not user_message:
         return
     if is_private := user_message[0] == '?':
@@ -461,7 +475,7 @@ async def send_message(message: Message, user_message: str) -> None:
     try:
         
         response: str = get_response(user_message)
-        if is_private:
+        if is_private and user_name_curr == "dr blue pikmin":
             await message.author.send(response)
         elif is_public:
             await message.channel.send(response)
