@@ -15,6 +15,7 @@ Coming soon!
 - **!leaderboard** - Displays the server leaderboard, showcasing the top 10 users with the highest throw-break streaks
 - **!balance** - Displays user's balance for Gulungus Bot's economy system
 - **!bj <value>** - Starts a game of Blackjack, where the value is the number of points the user is willing to wager
+- **!send <username> <value>** - Sends another user Gulungus Bucks from your balance
 
 ## Future Plans
 - **More Characters** - More characters for users to practice their throw breaks against
