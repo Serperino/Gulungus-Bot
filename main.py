@@ -109,6 +109,46 @@ async def update_balance(message: Message, user_id, sessionScore):
     conn.commit()
     await message.channel.send(f'balance of {current_balance + doubleSession}!')
     
+async def transfer_money(message: Message):
+    messagePieces = message.content.split()
+    if len(messagePieces) < 3:
+        await message.channel.send("invalid format, use !transfer <receiver_name> <amount>")
+        return
+    receiverName = messagePieces[1]
+    try:
+        amount = int(messagePieces[2])
+    except ValueError:
+        await message.channel.send("amount must be an integer, use !transfer <receiver_name> <amount>")
+    sender_id = str(message.author.id)
+   
+    if amount <= 0:
+        await message.channel.send("fuck u wasi")
+        return
+
+    cursor = conn.cursor()
+    cursor.execute("SELECT user_id FROM gulungus_economy WHERE user_name = ?", (receiverName,))
+    receiver_data = cursor.fetchone()
+    if not receiver_data:
+        await message.channel.send("User not found.")
+        return
+    receiver_id = receiver_data[0]
+
+    
+    cursor.execute("SELECT balance FROM gulungus_economy WHERE user_id = ?", (sender_id,))
+    senderBalance = cursor.fetchone()
+    if not senderBalance or senderBalance[0] < amount:
+        await message.channel.send("not even cash")    
+    cursor.execute("UPDATE gulungus_economy SET balance = balance - ? WHERE user_id = ?",(amount, sender_id))
+    cursor.execute("UPDATE gulungus_economy SET balance = balance + ? WHERE user_id = ?",(amount, receiver_id))
+    conn.commit()
+    await message.channel.send(f'successful transfer, your balance is now {senderBalance[0] - amount}!')
+
+
+                
+        
+    
+    
+    
     
 async def update_balance_blackjack(message: Message, user_id, newBalance):
     userName= str(message.author.display_name)
@@ -489,6 +529,8 @@ async def send_message(message: Message, user_message: str) -> None:
                 await handle_balance(message)
             if 'bj' in user_message:
                 await handle_blackjack(client, message, user_message)
+            if 'send' in user_message:
+                await transfer_money(message)
             
             
     except Exception as e:
