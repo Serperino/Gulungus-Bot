@@ -25,6 +25,7 @@ Coming soon!
 
 ## Version 1.1.1
 - **New Economy Functionality** - Send money to other users using !send <user> <amount>!
+- **Tools to Make Development Easier** - Moving towards implementing Github Actions fully, hopefully resulting in consistency and reliable improvements as I push updates
 
 # Past Patch Notes:
 ## Version 1.1 Patch Notes and Bugfixes
