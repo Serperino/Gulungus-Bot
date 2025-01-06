@@ -20,6 +20,8 @@ jobs:
         username: ec2-user
         key: ${{ secrets.AWS_PRIVATE_KEY }}     
         script: |
+          echo "$PRIVATE_KEY" > private_key && chmod 600 private_key 
+          ssh -o StrictHostKeyChecking=no -i private_key ${USER_NAME}@${HOSTNAME} '
           echo "Testing SSH Connection..."
           cd ~/Gulungus-Bot
           ./deploy.sh
