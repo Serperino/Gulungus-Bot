@@ -5,7 +5,7 @@ Gulungus Bot is a Discord bot written in Python, centering around practicing thr
 - **Throw Break Practice** - Users can practice throw breaks against a variety of characters
 - **Leaderboard** - Tracks users' scores and displays rankings
 - **SQLite integration** - Leverages SQLite to manage leaderboard, allowing for easy backup and restoration
-- **Economy System** - Users may wager their points in games of Blackjack, and also exchange points with others (coming soon)
+- **Economy System** - Users may wager their points in games of Blackjack, and also exchange points with others 
 
 ## Installation
 Coming soon!
