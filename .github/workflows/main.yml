@@ -20,5 +20,6 @@ jobs:
         username: ec2-user
         key: ${{ secrets.AWS_PRIVATE_KEY }}     
         script: |
+          echo "Testing SSH Connection..."
           cd ~/Gulungus-Bot
           ./deploy.sh
