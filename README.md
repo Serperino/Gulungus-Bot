@@ -7,9 +7,6 @@ Gulungus Bot is a Discord bot written in Python, centering around practicing thr
 - **SQLite integration** - Leverages SQLite to manage leaderboard, allowing for easy backup and restoration
 - **Economy System** - Users may wager their points in games of Blackjack, and also exchange points with others 
 
-## Installation
-Coming soon!
-
 ## Usage
 - **!throwtest** - Starts the _Tekken 8_ throw-break practice session, type in chat "1', "2", or "12" for the corresponding throw shown
 - **!leaderboard** - Displays the server leaderboard, showcasing the top 10 users with the highest throw-break streaks
@@ -21,7 +18,7 @@ Coming soon!
 - **More Characters** - More characters for users to practice their throw breaks against
 - **Challenge Others** - Implement the ability for users to challenge each other to see who can get the longest streak
 - **Economy User Interactions** - Allow users to exchange points with eachother, and have server owners create a list of rewards to buy with points
-- **Tekken Move Quiz** - Quiz yourself on optimal punishes for popular moves from a varieyt of different characters
+- **Tekken Move Quiz** - Quiz yourself on optimal punishes for popular moves from a variety of different characters
 
 ## Version 1.1.1
 - **New Economy Functionality** - Send money to other users using !send <user> <amount>!
