@@ -9,15 +9,15 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
 
-    steps:
-    - name: Deploy to AWS
-      uses: appleboy/ssh-action@v0.1.5 #creates a SSH instance using the variables and scripts below
-      with:
-        host: ${{ secrets.AWS_HOST }}
-        username: ec2-user 
-        key: ${{ secrets.AWS_PRIVATE_KEY }}     
-        script: |
-          echo "Testing SSH Connection..."
-          cd ~/Gulungus-Bot
-          ./deploy.sh
+    #steps:
+    #- name: Deploy to AWS
+      #uses: appleboy/ssh-action@v0.1.5 #creates a SSH instance using the variables and scripts below
+      #with:
+       # host: ${{ secrets.AWS_HOST }}
+      #  username: ec2-user 
+     #   key: ${{ secrets.AWS_PRIVATE_KEY }}     
+      #  script: |
+       #   echo "Testing SSH Connection..."
+        #  cd ~/Gulungus-Bot
+         # ./deploy.sh
      
